@@ -1,13 +1,13 @@
 {
-  "name": "obsidian-sample-plugin",
+  "name": "obsidian-git-hotkeys",
   "version": "0.12.0",
-  "description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+  "description": "register git hotkeys for update",
   "main": "main.js",
   "scripts": {
     "dev": "rollup --config rollup.config.js -w",
     "build": "rollup --config rollup.config.js --environment BUILD:production"
   },
-  "keywords": [],
+  "keywords": ["git", "hotkeys"],
   "author": "",
   "license": "MIT",
   "devDependencies": {

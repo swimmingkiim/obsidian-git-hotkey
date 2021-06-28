@@ -1,46 +1,52 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import updateGitRepo from "./gitScript";
 
 interface MyPluginSettings {
-	mySetting: string;
+	gitInformation: {
+		userName: string;
+		email: string;
+		gitRepoPath: string;
+	}
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	gitInformation: {
+		userName: 'your git username',
+		email: 'your git email',
+		gitRepoPath: 'your git repo path'
+	}
 }
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+
+	async gitPush() {
+		const resultMessage = await updateGitRepo(this.settings.gitInformation.gitRepoPath);
+		new Notice(resultMessage, 3000)
+	}
 
 	async onload() {
 		console.log('loading plugin');
 
 		await this.loadSettings();
 
-		this.addRibbonIcon('dice', 'Sample Plugin', () => {
-			new Notice('This is a notice!');
+		this.addRibbonIcon('dice', 'update git repo', async() => {
+			await this.gitPush();
 		});
 
 		this.addStatusBarItem().setText('Status Bar Text');
 
 		this.addCommand({
-			id: 'open-sample-modal',
-			name: 'Open Sample Modal',
-			// callback: () => {
-			// 	console.log('Simple Callback');
-			// },
+			id: 'update git repo',
+			name: 'Update Git Repository',
 			checkCallback: (checking: boolean) => {
-				let leaf = this.app.workspace.activeLeaf;
-				if (leaf) {
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-					return true;
+				if (!checking) {
+					this.gitPush();
 				}
-				return false;
 			}
 		});
 
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new GitHotkeysSettingTab(this.app, this));
 
 		this.registerCodeMirror((cm: CodeMirror.Editor) => {
 			console.log('codemirror', cm);
@@ -82,7 +88,7 @@ class SampleModal extends Modal {
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
+class GitHotkeysSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 
 	constructor(app: App, plugin: MyPlugin) {
@@ -95,18 +101,40 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {text: 'Your git account'});
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('username')
+			.setDesc('Your git username')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue('')
+				.setPlaceholder('username')
+				.setValue(this.plugin.settings.gitInformation.userName??'')
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.gitInformation.userName = value;
+					await this.plugin.saveSettings();
+				}));
+
+			new Setting(containerEl)
+			.setName('email')
+			.setDesc('Your git email')
+			.addText(text => text
+				.setPlaceholder('email')
+				.setValue(this.plugin.settings.gitInformation.email??'')
+				.onChange(async (value) => {
+					this.plugin.settings.gitInformation.email = value;
+					await this.plugin.saveSettings();
+				}));
+
+			new Setting(containerEl)
+			.setName('git repo path')
+			.setDesc('Your git repository path in local computer')
+			.addText(text => text
+				.setPlaceholder('local path')
+				.setValue(this.plugin.settings.gitInformation.gitRepoPath??'')
+				.onChange(async (value) => {
+					this.plugin.settings.gitInformation.gitRepoPath = value;
 					await this.plugin.saveSettings();
 				}));
 	}
 }
+
